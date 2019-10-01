@@ -1,0 +1,26 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/config.2.0.schema.json",
+  "version": "2.0",
+  "bundles": {
+    "admin-request-form-web-part": {
+      "components": [{
+        "entrypoint": "./lib/webparts/adminRequestForm/AdminRequestFormWebPart.js",
+        "manifest": "./src/webparts/adminRequestForm/AdminRequestFormWebPart.manifest.json"
+      }]
+    }
+  },
+  "externals": {
+    "jquery": {
+      "path": "https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js",
+      "globalName": "jquery"
+    },
+
+    "jqueryui": {
+      "path": "lib/webparts/adminRequestForm/scripts/jquery-ui.js",
+      "globalName": "jqueryui"
+    }
+  },
+  "localizedResources": {
+    "AdminRequestFormWebPartStrings": "lib/webparts/adminRequestForm/loc/{locale}.js"
+  }
+}
