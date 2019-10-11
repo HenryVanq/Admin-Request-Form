@@ -49,10 +49,25 @@ export default class AdminRequestFormWebPart extends BaseClientSideWebPart<IAdmi
 
     <form id="form" onsubmit="return false" autocomplete="off">
 
-    <div class="form-group">
-      <label for="inputEmail4"> <h6> ${strings.DescriptionFieldLabelRequest} * </h6> </label>
-      <input maxlength="255" type="text" class="form-control" id="request" placeholder="${strings.DescriptionFieldLabelRequest}" required="true" autocomplete="off">
+    <div class="form-row">
+      <div class="form-group col-md-6">
+        <label for="inputEmail4"> <h6> ${strings.DescriptionFieldLabelRequest} * </h6> </label>
+        <input maxlength="255" type="text" class="form-control" id="request" placeholder="${strings.DescriptionFieldLabelRequest}" required="true" autocomplete="off">
+      </div>
+      
+      <div class="form-group col-md-6">
+      <label for="inputEmail4"> <h6>  Επιλογή Τμήματος * </h6> </label>
+        <select id="selectteam" class="form-control" placeholder="test">
+          <option selected>  </option>
+          <option> Γενικό </option>
+          <option> Τμήμα Α </option>
+          <option> Τμήμα Β </option>
+          <option> Τμήμα Γ </option>
+          <option> Τμήμα Δ </option>
+        </select>
+      </div>
     </div>
+
     <div class="form-row" >
       <div class="form-group col-md-6">
         <label for="inputEmail4"> <h6> ${strings.DescriptionFieldLabelRefNumberIn} * </h6> </label>
@@ -90,10 +105,17 @@ export default class AdminRequestFormWebPart extends BaseClientSideWebPart<IAdmi
     <label for="exampleFormControlTextarea1"><h6> ${strings.DescriptionFieldLabelReason} * </h6> </label>
     <textarea maxlength="2000"class="form-control" id="reason" rows="2" placeholder="${strings.DescriptionFieldLabelReason}"></textarea>
   </div>
-  <br> <br>
+
+  <div class="form-group">
+    <label for="exampleFormControlTextarea1"><h6> Ανάρτηση Αρχείου </h6> </label>
+    <input class="form-control"  type='file' id='fileUploadInput' name='myfile' />
+    <button id="fileUpload" name="uFile" style='display:none'>upload</button>
+  </div>
+
+  <br>
   <div class="ol text-center">
-    <button id="submit" type="submit" class="btn btn-primary btn-block"><h5> Αποστολή </h5> </button>
-    <button id="cancel" type="button" class="btn btn-secondary btn-block"> <h5> Ακύρωση </h5> </button>
+    <button id="submit" type="submit" class="btn btn-dark btn-block"><h5> Αποστολή Αιτήματος </h5> </button>
+    <button id="cancel" type="button" class="btn btn-light btn-block border"> <h5> Ακύρωση </h5> </button>
   </div>
 
 </form>
@@ -120,6 +142,26 @@ export default class AdminRequestFormWebPart extends BaseClientSideWebPart<IAdmi
     })
   }
 
+  private uploadingFileEventHandlers(list, id): void {
+
+    let fileUpload = document.getElementById("fileUpload")
+    let test1 = document.getElementById("fileUploadInput")
+
+    if (fileUpload) {
+      this.uploadFiles(test1, list, id);
+    }
+  }
+
+  private uploadFiles(fileUpload, list, id) {
+
+    let file = fileUpload.files[0];
+    let item = sp.web.lists.getByTitle(list).items.getById(id);
+
+    item.attachmentFiles.add(file.name, file).then(v => {
+      console.log(v)
+    });
+  }
+
   protected onInit(): Promise<void> {
     sp.setup({
       spfxContext: this.context
@@ -127,27 +169,22 @@ export default class AdminRequestFormWebPart extends BaseClientSideWebPart<IAdmi
     return super.onInit()
   }
 
-
-  private redirect(url: string, newTab?: boolean) {
-    // Create a hyperlink element to redirect so that SharePoint uses modern redirection
-    const link = document.createElement('a');
-    link.href = url;
-    document.body.appendChild(link);
-    link.click();
-  }
-
   protected postingData(list: string) {
 
-    var inputRequest = $('#request').val();
+    const inputRequest = $('#request').val();
+    const inputSelectDepartment = $('#selectteam').val();
     const inputRefNumberIn = $('#refNumberIn').val();
-    var date = $("#date").val()
-    var inputFullName = $('#fullname').val();
-    var inputOrganization = $('#organization').val();
-    var inputEmail = $('#email').val();
-    var inputPhoneNumber = $('#phoneNumber').val();
-    var inputReason = $('#reason').val();
+    const date = $("#date").val()
+    const inputFullName = $('#fullname').val();
+    const inputOrganization = $('#organization').val();
+    const inputEmail = $('#email').val();
+    const inputPhoneNumber = $('#phoneNumber').val();
+    const inputReason = $('#reason').val();
+
+    console.log("department: " + inputSelectDepartment)
 
     if (inputRequest != ""
+      && inputSelectDepartment != ""
       && inputRefNumberIn != ""
       && date != ""
       && inputFullName != ""
@@ -174,32 +211,39 @@ export default class AdminRequestFormWebPart extends BaseClientSideWebPart<IAdmi
             Email: inputEmail,
             PhoneNumber: inputPhoneNumber,
             Reason: inputReason,
-            ReferenceNumberIn: inputRefNumberIn
+            ReferenceNumberIn: inputRefNumberIn,
+            Department: inputSelectDepartment
           }).then((iar: ItemAddResult) => {
-            //$("#submit").prop("disabled", true);
+            console.log('iar:' + iar)
+            for (let i in iar) {
+              const input = $('#fileUploadInput').val();
+              if (input === "") {
+                return console.log('no file')
+              }
+              console.log('iar[i].ID: ' + iar[i].ID);
+              console.log('list: ' + list)
+              return this.uploadingFileEventHandlers(list, iar[i].ID);
+            }
+          }).then(() => {
+
             $("#form").hide();
             $('#submit').prop("disabled", true);
 
             $('#divShow').append(`
-            <div class="card"> 
-              <div class="card-body">
-                <h5 class="card-title">To αίτημα σας καταχωρήθηκε επιτυχώς </h5>
-              </div>
-            </div> 
-            <br>
-            
-            <button id="ok" class="btn btn-secondary btn-block"> <h5> Έξοδος <h5> </button> <br>
+              <div class="card"> 
+                <div class="card-body">
+                  <h5 class="card-title">To αίτημα σας καταχωρήθηκε επιτυχώς </h5>
+                </div>
+              </div> 
+              <br>
+              <button id="ok" class="btn btn-light btn-block border"> <h5> Έξοδος <h5> </button> <br>
             `);
 
             $('#ok').on('click', () => {
-
               if (confirm("Έξοδος?")) {
-
                 window.location.replace('https://idikagr.sharepoint.com/sites/ExternalSharing');
-
               }
             })
-            console.log(iar);
           })
         } catch (err) {
           console.log(err)
@@ -209,6 +253,7 @@ export default class AdminRequestFormWebPart extends BaseClientSideWebPart<IAdmi
       }
 
     } else if (inputRequest != ""
+      && inputSelectDepartment != ""
       && inputRefNumberIn != ""
       && date != ""
       && inputFullName != ""
@@ -222,6 +267,7 @@ export default class AdminRequestFormWebPart extends BaseClientSideWebPart<IAdmi
       alert("To τηλέφωνο επικοινωνίας πρέπει να περιλαμβάνει μόνο αριθμούς")
 
     } else if (inputRequest != ""
+      && inputSelectDepartment != ""
       && inputRefNumberIn != ""
       && date != ""
       && inputFullName != ""
@@ -233,6 +279,7 @@ export default class AdminRequestFormWebPart extends BaseClientSideWebPart<IAdmi
       && this.t() === true) {
       alert("To Email που εισάγεται δεν είναι σωστό")
     } else if (inputRequest != ""
+      && inputSelectDepartment != ""
       && inputRefNumberIn != ""
       && date != ""
       && inputFullName != ""
