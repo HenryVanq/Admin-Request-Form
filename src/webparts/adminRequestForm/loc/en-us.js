@@ -6,14 +6,14 @@ define([], function () {
     "PropertyPaneDescription": "Φόρμα Αιτήματος",
     "BasicGroupName": "Group Name",
     "DescriptionFieldLabelRequest": "Αίτημα",
-    "DescriptionFieldLabelFullName": "Ονοματεπώνυμο",
-    "DescriptionFieldLabelOrganization": "Οργανισμός/Υπηρεσία",
-    "DescriptionFieldLabelEmail": "Υπηρεσιακό Email",
-    "DescriptionFieldLabelPhoneNumber": "Τηλέφωνο Επικοινωνίας",
-    "DescriptionFieldLabelReason": "Αιτιολόγηση",
+    "DescriptionFieldLabelFullName": "Ονοματεπώνυμο Αιτούντος",
+    "DescriptionFieldLabelOrganization": "Οργανισμός/Υπηρεσία Αιτούντος",
+    "DescriptionFieldLabelEmail": "eMail Αιτούντος",
+    "DescriptionFieldLabelPhoneNumber": "Τηλέφωνο Επικοινωνίας Αιτούντος",
+    "DescriptionFieldLabelReason": "Αιτιολόγηση Αιτήματος",
     "DescriptionFieldLabelStatus": "Status",
     "DescriptionFieldLabelDownloaded": "Κατέβηκε",
-    "DescriptionFieldLabelDate": "Ημερομηνία",
-    "DescriptionFieldLabelRefNumberIn": "Αρ. πρωτ. Εισερχομένου"
+    "DescriptionFieldLabelDate": "Ημερομηνία αιτήματος",
+    "DescriptionFieldLabelRefNumberIn": "Αρ. πρωτ. Εισερχομένου ΗΔΙΚΑ"
   }
 });

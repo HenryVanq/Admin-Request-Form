@@ -4,14 +4,9 @@ import {
   IPropertyPaneConfiguration,
   PropertyPaneTextField
 } from '@microsoft/sp-webpart-base';
-import { escape } from '@microsoft/sp-lodash-subset';
-
 import * as strings from 'AdminRequestFormWebPartStrings';
-
 import { SPComponentLoader } from '@microsoft/sp-loader';
-
 import { sp, ItemAddResult } from "@pnp/sp";
-
 import * as $ from 'jquery';
 
 require('./css/jquery-ui.css');
@@ -35,12 +30,12 @@ export interface IAdminRequestFormWebPartProps {
   statusRejected: string;
 }
 
+var html = ''
+
 export default class AdminRequestFormWebPart extends BaseClientSideWebPart<IAdminRequestFormWebPartProps> {
 
   public render(): void {
     this.domElement.innerHTML = `
-     
-      
     <div class="card text-center bg-info mb-3">
       <div class="card-header"> <h3 id="title" class="text-white">Αίτημα Παροχής Στοιχείων </h3> </div>
     </div>
@@ -58,12 +53,6 @@ export default class AdminRequestFormWebPart extends BaseClientSideWebPart<IAdmi
       <div class="form-group col-md-6">
       <label for="inputEmail4"> <h6>  Επιλογή Τμήματος * </h6> </label>
         <select id="selectteam" class="form-control" placeholder="test">
-          <option selected>  </option>
-          <option> Γενικό </option>
-          <option> Τμήμα Α </option>
-          <option> Τμήμα Β </option>
-          <option> Τμήμα Γ </option>
-          <option> Τμήμα Δ </option>
         </select>
       </div>
     </div>
@@ -118,32 +107,36 @@ export default class AdminRequestFormWebPart extends BaseClientSideWebPart<IAdmi
     <button id="cancel" type="button" class="btn btn-light btn-block border"> <h5> Ακύρωση </h5> </button>
   </div>
 
-</form>
-        `;
+</form>`;
 
     (<any>$("#date")).datepicker(
       {
         changeMonth: true,
         changeYear: true,
-        dateFormat: "mm/dd/yy"
+        dateFormat: "dd-mm-yy"
       }
     );
 
     $('#submit').on("click", () => {
-      this.postingData('Requests');
+      this.postingData();
     })
 
     $('#cancel').on('click', () => {
       if (confirm("Ακύρωσης αιτήματος?")) {
-
         window.location.replace('https://idikagr.sharepoint.com/sites/ExternalSharing');
-
       }
+    })
+
+    sp.web.lists.getByTitle("Department").items.get().then((data) => {
+
+      data.map((item) => {
+        $('#selectteam').append('<option>' + item.NameDepartment + '</option>')
+      })
     })
   }
 
-  private uploadingFileEventHandlers(list, id): void {
 
+  private uploadingFileEventHandlers(list, id): void {
     let fileUpload = document.getElementById("fileUpload")
     let test1 = document.getElementById("fileUploadInput")
 
@@ -153,12 +146,10 @@ export default class AdminRequestFormWebPart extends BaseClientSideWebPart<IAdmi
   }
 
   private uploadFiles(fileUpload, list, id) {
-
     let file = fileUpload.files[0];
     let item = sp.web.lists.getByTitle(list).items.getById(id);
 
     item.attachmentFiles.add(file.name, file).then(v => {
-      console.log(v)
     });
   }
 
@@ -169,8 +160,7 @@ export default class AdminRequestFormWebPart extends BaseClientSideWebPart<IAdmi
     return super.onInit()
   }
 
-  protected postingData(list: string) {
-
+  protected async postingData() {
     const inputRequest = $('#request').val();
     const inputSelectDepartment = $('#selectteam').val();
     const inputRefNumberIn = $('#refNumberIn').val();
@@ -180,123 +170,86 @@ export default class AdminRequestFormWebPart extends BaseClientSideWebPart<IAdmi
     const inputEmail = $('#email').val();
     const inputPhoneNumber = $('#phoneNumber').val();
     const inputReason = $('#reason').val();
+    const attachedFile = $('#fileUploadInput').val();
 
-    console.log("department: " + inputSelectDepartment)
+    if (inputRequest === ""
+      || inputSelectDepartment === ""
+      || inputRefNumberIn === ""
+      || date === ""
+      || inputFullName === ""
+      || inputOrganization === ""
+      || inputEmail === ""
+      || inputPhoneNumber === ""
+      || inputReason === "") {
 
-    if (inputRequest != ""
-      && inputSelectDepartment != ""
-      && inputRefNumberIn != ""
-      && date != ""
-      && inputFullName != ""
-      && inputOrganization != ""
-      && inputEmail != ""
-      && inputPhoneNumber != ""
-      && inputReason != ""
-      && this.validateEmail(inputEmail)
-      && this.t() === true) {
-
-
-
-      var num = new Number(inputPhoneNumber);
-      var strPhoneNumber = num.toString();
-
-      if (strPhoneNumber.length === 10) {
-        try {
-          // add an item to the list
-          sp.web.lists.getByTitle(list).items.add({
-            Request: inputRequest,
-            RequestDate: date.toString(),
-            Fullname: inputFullName,
-            Organization: inputOrganization,
-            Email: inputEmail,
-            PhoneNumber: inputPhoneNumber,
-            Reason: inputReason,
-            ReferenceNumberIn: inputRefNumberIn,
-            Department: inputSelectDepartment
-          }).then((iar: ItemAddResult) => {
-            console.log('iar:' + iar)
-            for (let i in iar) {
-              const input = $('#fileUploadInput').val();
-              if (input === "") {
-                return console.log('no file')
-              }
-              console.log('iar[i].ID: ' + iar[i].ID);
-              console.log('list: ' + list)
-              return this.uploadingFileEventHandlers(list, iar[i].ID);
-            }
-          }).then(() => {
-
-            $("#form").hide();
-            $('#submit').prop("disabled", true);
-
-            $('#divShow').append(`
-              <div class="card"> 
-                <div class="card-body">
-                  <h5 class="card-title">To αίτημα σας καταχωρήθηκε επιτυχώς </h5>
-                </div>
-              </div> 
-              <br>
-              <button id="ok" class="btn btn-light btn-block border"> <h5> Έξοδος <h5> </button> <br>
-            `);
-
-            $('#ok').on('click', () => {
-              if (confirm("Έξοδος?")) {
-                window.location.replace('https://idikagr.sharepoint.com/sites/ExternalSharing');
-              }
-            })
-          })
-        } catch (err) {
-          console.log(err)
-        }
-      } else {
-        alert("To τηλέφωνο επικοινωνίας πρέπει να περιλαμβάνει 10 αριθμούς")
-      }
-
-    } else if (inputRequest != ""
-      && inputSelectDepartment != ""
-      && inputRefNumberIn != ""
-      && date != ""
-      && inputFullName != ""
-      && inputOrganization != ""
-      && inputEmail != ""
-      && inputPhoneNumber != ""
-      && inputReason != ""
-      && this.validateEmail(inputEmail)
-      && this.t() === false) {
-
-      alert("To τηλέφωνο επικοινωνίας πρέπει να περιλαμβάνει μόνο αριθμούς")
-
-    } else if (inputRequest != ""
-      && inputSelectDepartment != ""
-      && inputRefNumberIn != ""
-      && date != ""
-      && inputFullName != ""
-      && inputOrganization != ""
-      && inputEmail != ""
-      && inputPhoneNumber != ""
-      && inputReason != ""
-      && !this.validateEmail(inputEmail)
-      && this.t() === true) {
-      alert("To Email που εισάγεται δεν είναι σωστό")
-    } else if (inputRequest != ""
-      && inputSelectDepartment != ""
-      && inputRefNumberIn != ""
-      && date != ""
-      && inputFullName != ""
-      && inputOrganization != ""
-      && inputEmail != ""
-      && inputPhoneNumber != ""
-      && inputReason != ""
-      && !this.validateEmail(inputEmail)
-      && this.t() === false) {
-      alert("To Email και τo τηλέφωνο επικοινωνίας δεν είναι σωστά")
-    } else {
-
-      alert("Πρέπει να συμπληρώστε όλα τα πεδία")
+      return false
     }
+
+    if (!this.validateEmail(inputEmail)
+      || this.checkingLength() === false) {
+      return false
+    }
+
+    var num = new Number(inputPhoneNumber);
+    var strPhoneNumber = num.toString();
+
+    if (strPhoneNumber.length != 10) {
+      return false
+    }
+
+    await sp.web.lists.getByTitle("Department").items.get().then((item: any) => {
+      item.map((data) => {
+        if (inputSelectDepartment != data.NameDepartment) {
+          return false
+        }
+
+        sp.web.lists.getByTitle('ExternalRequest').items.add({
+          Request: inputRequest,
+          Date: date.toString(),
+          Fullname: inputFullName,
+          Organization: inputOrganization,
+          Email: inputEmail,
+          PhoneNumber: inputPhoneNumber,
+          Reason: inputReason,
+          ReferenceNumberIn: inputRefNumberIn,
+          Department: inputSelectDepartment,
+          Available: "yes",
+          DepartmenPhone: data.PhoneDepartment
+        }).then((result) => {
+          for (let i in result) {
+            if (attachedFile === "") {
+              return false
+            }
+            return this.uploadingFileEventHandlers('ExternalRequest', result[i].ID);
+          }
+
+        }).catch(e => console.log(e))
+      })
+    })
+
+    await this.hidingForm(inputRefNumberIn)
+
   }
 
-  protected t() {
+
+  protected hidingForm(inputRefNumberIn) {
+    $("#form").hide();
+    $('#submit').prop("disabled", true);
+    $('#divShow').append(`
+          <div class="card"> 
+            <div class="card-body">
+              <h6 class="card-title">Η υποβολή του αιτήματός σας με αναγνωριστικό «${inputRefNumberIn}» ολοκληρώθηκε επιτυχώς. Θα ειδοποιηθείτε στη ηλεκτρονική διεύθυνση αλληλογραφίας που δηλώσατε για τη λήψη των στοιχείων μετά από την επεξεργασία του αιτήματός σας από το αρμόδιο τμήμα </h6>
+            </div>
+          </div> 
+              <br>
+          <button id="ok" class="btn btn-light btn-block border"> <h5> Μετάβαση στη σελίδα διαχείρισης <h5> </button> <br>`);
+
+    $('#ok').on('click', () => {
+      window.location.replace('https://idikagr.sharepoint.com/sites/ExternalSharing');
+    })
+  }
+
+  protected checkingLength() {
     var x = document.forms["form"]["phoneNumber"].value;
     if (isNaN(x)) {
       return false;
@@ -309,7 +262,6 @@ export default class AdminRequestFormWebPart extends BaseClientSideWebPart<IAdmi
     var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
     return re.test(String(email).toLowerCase());
   }
-
 
   protected get dataVersion(): Version {
     return Version.parse('1.0');
