@@ -64,7 +64,7 @@ export default class AdminRequestFormWebPart extends BaseClientSideWebPart<IAdmi
       </div>
       <div class="form-group col-md-6">
         <label for="inputEmail4"> <h6> ${strings.DescriptionFieldLabelDate} * </h6> </label>
-        <input type="text" class="form-control" id="date" name="txtDate" placeholder="${strings.DescriptionFieldLabelDate}" required="true">
+        <input type="text" minlength="10" maxlength="10" class="form-control" id="date" name="txtDate" placeholder="${strings.DescriptionFieldLabelDate}" required="true">
       </div>
     </div>
 
@@ -82,8 +82,9 @@ export default class AdminRequestFormWebPart extends BaseClientSideWebPart<IAdmi
     <div class="form-row">
       <div class="form-group col-md-6">
         <label for="inputState"> <h6> ${strings.DescriptionFieldLabelPhoneNumber} *  </h6> </label>
-        <input minlength="10" maxlength="10" type="tel" class="form-control" id="phoneNumber" placeholder="${strings.DescriptionFieldLabelPhoneNumber}" required="true">
-      </div>
+        <input minlength="10" maxlength="10" class="form-control" id="phoneNumber" placeholder="${strings.DescriptionFieldLabelPhoneNumber}" required="true">
+        <small id="phoneHelpBlock" class="form-text text-muted"></small>
+        </div>
       <div class="form-group col-md-6">
         <label for="inputCity"> <h6> ${strings.DescriptionFieldLabelEmail} *  </h6> </label>
         <input type="email" class="form-control" id="email" placeholder="${strings.DescriptionFieldLabelEmail}" required="true">
@@ -92,7 +93,7 @@ export default class AdminRequestFormWebPart extends BaseClientSideWebPart<IAdmi
 
     <div class="form-group">
     <label for="exampleFormControlTextarea1"><h6> ${strings.DescriptionFieldLabelReason} * </h6> </label>
-    <textarea maxlength="2000"class="form-control" id="reason" rows="2" placeholder="${strings.DescriptionFieldLabelReason}"></textarea>
+    <textarea maxlength="2000"class="form-control" id="reason" rows="2" placeholder="${strings.DescriptionFieldLabelReason}" required="true"></textarea>
   </div>
 
   <div class="form-group">
@@ -128,7 +129,7 @@ export default class AdminRequestFormWebPart extends BaseClientSideWebPart<IAdmi
     })
 
     sp.web.lists.getByTitle("Department").items.get().then((data) => {
-
+      $("#selectteam").empty();
       data.map((item) => {
         $('#selectteam').append('<option>' + item.NameDepartment + '</option>')
       })
@@ -175,7 +176,7 @@ export default class AdminRequestFormWebPart extends BaseClientSideWebPart<IAdmi
     if (inputRequest === ""
       || inputSelectDepartment === ""
       || inputRefNumberIn === ""
-      || date === ""
+      || (date === "" || date.toString().length != 10)
       || inputFullName === ""
       || inputOrganization === ""
       || inputEmail === ""
@@ -185,9 +186,13 @@ export default class AdminRequestFormWebPart extends BaseClientSideWebPart<IAdmi
       return false
     }
 
-    if (!this.validateEmail(inputEmail)
-      || this.checkingLength() === false) {
+
+    if (!this.validateEmail(inputEmail)) {
       return false
+    }
+
+    if (this.checkingLength() === false) {
+      $('#phoneHelpBlock').html('<p>  Το τηλέφωνο επικοινωνίας πρέπει να περιλαμβάνει μόνο αριθμούς</p>')
     }
 
     var num = new Number(inputPhoneNumber);
@@ -196,6 +201,7 @@ export default class AdminRequestFormWebPart extends BaseClientSideWebPart<IAdmi
     if (strPhoneNumber.length != 10) {
       return false
     }
+
 
     await sp.web.lists.getByTitle("Department").items.get().then((item: any) => {
       item.map((data) => {
@@ -214,7 +220,9 @@ export default class AdminRequestFormWebPart extends BaseClientSideWebPart<IAdmi
           ReferenceNumberIn: inputRefNumberIn,
           Department: inputSelectDepartment,
           Available: "yes",
-          DepartmenPhone: data.PhoneDepartment
+          DepartmenPhone: data.PhoneDepartment,
+          emailDepartment: data.email
+
         }).then((result) => {
           for (let i in result) {
             if (attachedFile === "") {
